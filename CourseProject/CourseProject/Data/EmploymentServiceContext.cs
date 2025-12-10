@@ -28,7 +28,7 @@ public partial class EmploymentServiceContext : DbContext
     public virtual DbSet<Vacancy> Vacancies { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseMySql("data source=localhost;initial catalog=course_project;user id=Ghost;password=GoldenFox1", ServerVersion.Parse("8.0.44-mysql"));
+        => optionsBuilder.UseMySql("data source=localhost;initial catalog=course_project;user id=логин;password=пароль", ServerVersion.Parse("8.0.44-mysql"));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
