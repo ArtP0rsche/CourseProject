@@ -1,0 +1,196 @@
+﻿@model IEnumerable<CourseProject.DataModels.Event>
+
+@{
+
+    ViewData["Title"] = "Мероприятия";
+
+}
+
+<head>
+    <style>
+        .delete-btn:hover {
+        background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <div style="display: flex;">
+        <div style="width: 20%; padding: 10px;">
+            <div class="nav-item">
+                @if (string.IsNullOrEmpty(Context.Session.GetString("UserRole")))
+                {
+                    <a asp-controller="Auth" asp-action="Login" class="item"><i class="fa fa-user-circle-o"></i> Личный кабинет</a>
+                }
+                else
+                {
+                    <a asp-controller="Users" asp-action="Edit" asp-route-id="@Convert.ToInt32(Context.Session.GetString("UserId"))" class="item"><i class="fa fa-user-circle-o"></i> Личный кабинет</a>
+                }
+            </div>
+            <div class="nav-item">
+                <a asp-action="Index" class="item"><i class="fa fa-calendar"></i> Мероприятия</a>
+            </div>
+            <div class="nav-item">
+                <a asp-controller="Vacancies" asp-action="Index" class="item"><i class="fa fa-address-card"></i> Вакансии</a>
+            </div>
+            @if (Context.Session.GetString("UserRole") == "Администратор")
+            {
+                <div class="nav-item">
+                    <a asp-controller="Requests" asp-action="Index" class="item"><i class="fa fa-envelope"></i> Заявки</a>
+                </div>
+            }
+        </div>
+
+        <div style="width: 80%; padding: 10px;">
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Поиск">
+                <button class="filter-btn btn"><i class="fa fa-filter" style="width: 30px"></i></button>
+            </div>
+
+            <div class="filter-container" style="display: none">
+                <div style="display: flex">
+                    Статус: 
+                    <select class="status-select" style="margin: 0 5px"> 
+                        <option value="Все">Все</option>
+                        <option value="В планах">В планах</option>
+                        <option value="Отменено">Отменено</option>
+                        <option value="Проведено">Проведено</option>
+                    </select>
+                    <input class="available-space" type="checkbox"/> Есть свободные места
+                </div>
+                <button class="clear-filter-btn">Сбросить фильтры</button>
+            </div>
+
+            <div class="post-wall" style="display: flex; flex-wrap: wrap;">
+                @if (Context.Session.GetString("UserRole") == "Администратор" || Context.Session.GetString("UserRole") == "Менеджер")
+                {
+                    <div class="create-event-container">
+                        <a class="create-event-btn btn" style="margin: 0 2.5px" asp-controller="Events" asp-action="Create"><i class="fa fa-plus"></i> Создать</a>
+                        <form class="action-form" asp-action="ExportToXlsx">
+                            <button type="submit" class="create-report-btn btn" style="margin: 0 2.5px" title="Сформировать отчёт"><i class="fa fa-file"></i></button>
+                        </form>
+                    </div>
+                }
+                @foreach (var item in Model)
+                {
+                    <div class="post-container" style="width: 100vw">
+                        <div class="post-header">
+                            <div class="profile-container">
+                                <img class="profile-picture" src="/resources/picture.jpg" />
+                                <span style="font-size: 22px; color: #FF5124; font-weight: bold">Работа России</span>
+                            </div>
+                            @if (Context.Session.GetString("UserRole") == "Администратор" || Context.Session.GetString("UserRole") == "Менеджер")
+                            {
+                                <div class="post-actions">
+                                    <a class="action-form btn" asp-action="Edit" asp-route-id="@item.EventId" title="Изменить"><i class="fa fa-edit"></i></a>
+                                    <form class="action-form" asp-action="Delete" asp-route-id="@item.EventId">
+                                        <button type="submit" class="btn delete-btn" title="Удалить" /><i class="fa fa-trash"></i>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                        <div class="post-content">
+                            <div class="photo-container">
+                                <img src="/resources/plug.png">
+                            </div>
+                            <div class="post-text-container">
+                                <h4 style="font-weight: bold;">@Html.DisplayFor(modelItem => item.Title)</h4>
+                                <h5 style="text-align: justify">@Html.DisplayFor(modelItem => item.Description)</h5>
+                                <h5 class="space">Свободных мест: @Html.DisplayFor(modelItem => item.AvailableSpace)</h5>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h5>Дата проведения: @Html.DisplayFor(modelItem => item.EventDate)</h5>
+                                    @if (!string.IsNullOrEmpty(Context.Session.GetString("UserRole")))
+                                    {
+                                        <a style="text-align: right;" class="btn" asp-controller="Requests" asp-action="Create" asp-route-eventId="@item.EventId" asp-route-userId="@Context.Session.GetString("UserId")"><i class="fa fa-share"></i> Подать заявку</a>
+                                    }
+                                </div>
+                            </div>
+                            <div class="post-date-updated">
+                                @if (item.Status == "Отменено")
+                                {
+                                    <div class="status" style="color: crimson; font-weight: bold">
+                                        <i class="fa fa-times"></i> @item.Status
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="status" style="color: darkgreen; font-weight: bold">
+                                        <i class="fa fa-check-square"></i> @item.Status
+                                    </div>
+                                }
+                                <div>
+                                    @Html.DisplayFor(modelItem => item.UpdatedOn)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const resetFiltersBtn = document.querySelector('.clear-filter-btn');
+        const filtersBtn = document.querySelector('.filter-btn');
+        const filtersContainer = document.querySelector('.filter-container');
+        const searchInput = document.querySelector('.search-input');
+        const statusFilter = document.querySelector('.status-select');
+        const hasPlacesFilter = document.querySelector('.available-space');
+        const postsList = document.querySelector('.post-wall');
+        const posts = postsList.querySelectorAll('.post-container');
+        const noPosts = document.querySelector('.no-results');
+
+        function filterPosts() {
+            const query = searchInput.value.toLowerCase().trim();
+            const selectedStatus = statusFilter.value;
+            const onlyWithPlaces = hasPlacesFilter.checked;
+
+            posts.forEach(post => {
+                const titleElem = post.querySelector('h4');
+                const titleText = titleElem ? titleElem.textContent.toLowerCase() : '';
+
+                const statusElem = post.querySelector('.post-date-updated > div:first-child');
+                const statusText = statusElem ? statusElem.textContent.trim() : '';
+
+                const placesElem = post.querySelector('.space');
+                let placesCount = 0;
+                if (placesElem) {
+                    const placesText = placesElem.textContent;
+                    const match = placesText.match(/Свободных мест:\s*(\d+)/);
+                    if (match) placesCount = parseInt(match[1], 10);
+                }
+
+                const matchesSearch = query === '' || titleText.includes(query);
+                const matchesStatus = selectedStatus === 'Все' || statusText === selectedStatus;
+                const matchesPlaces = !onlyWithPlaces || placesCount > 0;
+
+                if (matchesSearch && matchesStatus && matchesPlaces) {
+                    post.style.display = 'block';
+                } else {
+                    post.style.display = 'none'; 
+                }
+            });
+        }
+        
+        filtersBtn.addEventListener('click', function () {
+            if (filtersContainer.style.display === 'none') {
+                filtersContainer.style.display = 'flex';
+            } else {
+                filtersContainer.style.display = 'none';
+            }
+        })
+
+        resetFiltersBtn.addEventListener('click', function () {
+            searchInput.value = '';
+            statusFilter.value = 'Все';
+            hasPlacesFilter.checked = false;
+
+            filterPosts();
+        });
+
+        searchInput.addEventListener('input', filterPosts);
+        statusFilter.addEventListener('change', filterPosts);
+        hasPlacesFilter.addEventListener('change', filterPosts);
+    });
+</script>
